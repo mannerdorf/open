@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: haulz-api
+    runtime: bun
+    buildCommand: bun install
+    startCommand: bun run backend/server.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ONEC_API_URL
+        value: https://tdn.postb.ru
+      - key: ONEC_API_USERNAME
+        value: order@lal-auto.com
+      - key: ONEC_API_PASSWORD
+        value: ZakaZ656565
+      - key: OPENAI_API_KEY
+        value: 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

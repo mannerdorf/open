@@ -1,0 +1,27 @@
+{
+  "name": "haulz-api-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Haulz app with 1C integration",
+  "main": "server.ts",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun run --watch server.ts",
+    "build": "bun build server.ts --outdir dist --target bun",
+    "type-check": "bun run --bun tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/trpc-server": "^0.4.0",
+    "@trpc/server": "^11.6.0",
+    "hono": "^4.9.9",
+    "zod": "^4.1.11",
+    "superjson": "^2.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "private": true
+}
