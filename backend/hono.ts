@@ -162,7 +162,32 @@ async function getPerevozki(startDate?: string, endDate?: string) {
     });
     
     const data = await response.json();
-    return data;
+    
+    // Парсим данные 1C API в нужный формат
+    const parsedData = Array.isArray(data) ? data.map((item: any) => ({
+      id: item.Number || `SHIP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      number: item.Number,
+      dateStart: item.DatePrih ? new Date(item.DatePrih).toISOString().split('T')[0] : null,
+      dateEnd: item.DateVr ? new Date(item.DateVr).toISOString().split('T')[0] : null,
+      status: item.State || 'Неизвестно',
+      places: parseInt(item.Mest) || 0,
+      paidWeight: parseFloat(item.PW) || 0,
+      weight: parseFloat(item.W) || 0,
+      volume: parseFloat(item.Value) || 0,
+      sum: parseFloat(item.Sum) || 0,
+      billStatus: item.StateBill || 'Неизвестно',
+      sender: item.Sender || 'Неизвестно',
+      // Дополнительные поля для совместимости
+      from: item.Sender || 'Неизвестно',
+      to: 'Назначение не указано',
+      cargo: `Груз #${item.Number}`,
+      weightDisplay: `${item.W} кг`,
+      paidWeightDisplay: `${item.PW} кг`,
+      volumeDisplay: `${item.Value} м³`,
+      sumDisplay: `${item.Sum} руб.`
+    })) : [];
+    
+    return parsedData;
   } catch (error) {
     return { error: `Ошибка получения перевозок: ${error}` };
   }
@@ -432,9 +457,35 @@ app.post("/api/add-company", async (c) => {
     const data = await response.json();
     console.log("[ADD-COMPANY] Success, items count:", Array.isArray(data) ? data.length : 'not an array');
     
+    // Парсим данные 1C API в нужный формат
+    const parsedData = Array.isArray(data) ? data.map((item: any) => ({
+      id: item.Number || `SHIP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      number: item.Number,
+      dateStart: item.DatePrih ? new Date(item.DatePrih).toISOString().split('T')[0] : null,
+      dateEnd: item.DateVr ? new Date(item.DateVr).toISOString().split('T')[0] : null,
+      status: item.State || 'Неизвестно',
+      places: parseInt(item.Mest) || 0,
+      paidWeight: parseFloat(item.PW) || 0,
+      weight: parseFloat(item.W) || 0,
+      volume: parseFloat(item.Value) || 0,
+      sum: parseFloat(item.Sum) || 0,
+      billStatus: item.StateBill || 'Неизвестно',
+      sender: item.Sender || 'Неизвестно',
+      // Дополнительные поля для совместимости
+      from: item.Sender || 'Неизвестно',
+      to: 'Назначение не указано',
+      cargo: `Груз #${item.Number}`,
+      weightDisplay: `${item.W} кг`,
+      paidWeightDisplay: `${item.PW} кг`,
+      volumeDisplay: `${item.Value} м³`,
+      sumDisplay: `${item.Sum} руб.`
+    })) : [];
+    
+    console.log("[ADD-COMPANY] Parsed data sample:", parsedData[0]);
+    
     return c.json({
       success: true,
-      data: data,
+      data: parsedData,
       message: "Компания успешно добавлена"
     });
     
