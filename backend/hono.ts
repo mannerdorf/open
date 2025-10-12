@@ -337,6 +337,7 @@ app.post("/api/add-company", async (c) => {
     
     console.log("[ADD-COMPANY] Calling 1C API:", fullUrl);
     console.log("[ADD-COMPANY] Auth user:", email);
+    console.log("[ADD-COMPANY] Auth header:", `Basic ${Buffer.from(`${email}:${password}`).toString('base64')}`);
     
     const response = await fetch(fullUrl, {
       method: 'GET',
