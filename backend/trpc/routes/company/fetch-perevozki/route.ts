@@ -39,18 +39,20 @@ export const fetchPerevozki = publicProcedure
         const dateB = formatDate(startDate);
         const dateE = formatDate(endDate);
         
-        const path = `/workbase/hs/DeliveryWebService/GetPerevozki?DateB=${dateB}&DateE=${dateE}`;
+        // Используем полный URL как в Postman
+        const fullUrl = `${apiUrl}/workbase/hs/DeliveryWebService/GetPerevozki?DateB=${dateB}&DateE=${dateE}`;
         
-        console.log('Making request to:', apiUrl + path);
+        console.log('Making request to:', fullUrl);
         console.log('Period:', dateB, 'to', dateE);
+        console.log('Auth:', apiUsername);
 
-        const url = new URL(apiUrl);
+        const url = new URL(fullUrl);
         const authString = Buffer.from(`${apiUsername}:${apiPassword}`).toString('base64');
 
         const options = {
           method: 'GET',
           hostname: url.hostname,
-          path: path,
+          path: url.pathname + url.search,
           headers: {
             'Authorization': `Basic ${authString}`,
           },

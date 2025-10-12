@@ -95,15 +95,26 @@ app.get("/api", (c) => {
 });
 
 app.get("/", (c) => {
-  return c.json({ 
-    status: "ok", 
+  return c.json({
+    status: "ok",
     message: "Server is running",
+    timestamp: new Date().toISOString(),
     endpoints: {
       api: "/api",
       trpc: "/api/trpc",
       addCompany: "/api/add-company",
-      test: "/api/test-perevozki"
+      test: "/api/test-perevozki",
+      health: "/api/health"
     }
+  });
+});
+
+// Простой тестовый эндпоинт
+app.get("/api/health", (c) => {
+  return c.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    version: "1.0.0"
   });
 });
 
