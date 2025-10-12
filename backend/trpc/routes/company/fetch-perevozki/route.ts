@@ -27,9 +27,22 @@ export const fetchPerevozki = publicProcedure
 
     return new Promise((resolve) => {
       try {
-        const path = '/workbase/hs/DeliveryWebService/GetPerevozki?DateB=2024-01-01&DateE=2026-01-01';
+        // Динамический период: последние 12 месяцев
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        
+        const formatDate = (date: Date): string => {
+          return date.toISOString().split('T')[0]; // Формат: YYYY-MM-DD
+        };
+        
+        const dateB = formatDate(startDate);
+        const dateE = formatDate(endDate);
+        
+        const path = `/workbase/hs/DeliveryWebService/GetPerevozki?DateB=${dateB}&DateE=${dateE}`;
         
         console.log('Making request to:', apiUrl + path);
+        console.log('Period:', dateB, 'to', dateE);
 
         const url = new URL(apiUrl);
         const authString = Buffer.from(`${apiUsername}:${apiPassword}`).toString('base64');

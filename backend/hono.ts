@@ -116,6 +116,19 @@ async function getPerevozki(startDate?: string, endDate?: string) {
     return { error: "1C API не настроен" };
   }
   
+  // Если даты не переданы, используем последние 12 месяцев
+  let finalStartDate = startDate;
+  let finalEndDate = endDate;
+  
+  if (!finalStartDate || !finalEndDate) {
+    const end = new Date();
+    const start = new Date();
+    start.setFullYear(start.getFullYear() - 1);
+    
+    finalStartDate = start.toISOString().split('T')[0];
+    finalEndDate = end.toISOString().split('T')[0];
+  }
+  
   try {
     const response = await fetch(`${onecUrl}/GetPerevozki`, {
       method: 'POST',
@@ -124,8 +137,8 @@ async function getPerevozki(startDate?: string, endDate?: string) {
         'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
       },
       body: JSON.stringify({
-        startDate: startDate || '2024-01-01',
-        endDate: endDate || new Date().toISOString().split('T')[0]
+        startDate: finalStartDate,
+        endDate: finalEndDate
       })
     });
     
@@ -294,6 +307,20 @@ app.get("/api/test-perevozki", async (c) => {
       }, 500);
     }
     
+    // Динамический период: последние 12 месяцев
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setFullYear(startDate.getFullYear() - 1);
+    
+    const formatDate = (date: Date): string => {
+      return date.toISOString().split('T')[0];
+    };
+    
+    const startDateStr = formatDate(startDate);
+    const endDateStr = formatDate(endDate);
+    
+    console.log("[TEST] Period:", startDateStr, "to", endDateStr);
+    
     // Тестовый запрос к API 1С
     const response = await fetch(`${onecUrl}/GetPerevozki`, {
       method: 'POST',
@@ -302,8 +329,8 @@ app.get("/api/test-perevozki", async (c) => {
         'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
       },
       body: JSON.stringify({
-        startDate: '2024-01-01',
-        endDate: '2026-01-01'
+        startDate: startDateStr,
+        endDate: endDateStr
       })
     });
     
