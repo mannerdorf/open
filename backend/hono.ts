@@ -114,7 +114,18 @@ app.get("/api/health", (c) => {
   return c.json({
     status: "healthy",
     timestamp: new Date().toISOString(),
-    version: "1.0.0"
+    version: "1.0.0",
+    test: "Railway deployment test"
+  });
+});
+
+// Тестовый эндпоинт для проверки деплоя
+app.get("/api/test-deploy", (c) => {
+  return c.json({
+    message: "Deploy test successful!",
+    timestamp: new Date().toISOString(),
+    commit: "8262901",
+    endpoints: ["/api/add-company", "/api/health", "/api/test-deploy"]
   });
 });
 
@@ -142,16 +153,11 @@ async function getPerevozki(startDate?: string, endDate?: string) {
   }
   
   try {
-    const response = await fetch(`${onecUrl}/GetPerevozki`, {
-      method: 'POST',
+        const response = await fetch(`${onecUrl}/workbase/hs/DeliveryWebService/GetPerevozki?DateB=${startDateStr}&DateE=${endDateStr}`, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
-      },
-      body: JSON.stringify({
-        startDate: finalStartDate,
-        endDate: finalEndDate
-      })
+      }
     });
     
     const data = await response.json();
@@ -406,17 +412,12 @@ app.get("/api/test-perevozki", async (c) => {
     console.log("[TEST] Period:", startDateStr, "to", endDateStr);
     
     // Тестовый запрос к API 1С
-    const response = await fetch(`${onecUrl}/GetPerevozki`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
-      },
-      body: JSON.stringify({
-        startDate: startDateStr,
-        endDate: endDateStr
-      })
-    });
+        const response = await fetch(`${onecUrl}/workbase/hs/DeliveryWebService/GetPerevozki?DateB=${startDateStr}&DateE=${endDateStr}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
+          }
+        });
     
     const data = await response.text();
     
