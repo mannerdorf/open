@@ -106,10 +106,53 @@ app.get("/", (c) => {
   });
 });
 
-// Простой роут для ChatGPT
+// Функции-помощники для получения данных из 1C
+async function getPerevozki(startDate?: string, endDate?: string) {
+  const onecUrl = process.env.ONEC_API_URL;
+  const username = process.env.ONEC_API_USERNAME;
+  const password = process.env.ONEC_API_PASSWORD;
+  
+  if (!onecUrl || !username || !password) {
+    return { error: "1C API не настроен" };
+  }
+  
+  try {
+    const response = await fetch(`${onecUrl}/GetPerevozki`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
+      },
+      body: JSON.stringify({
+        startDate: startDate || '2024-01-01',
+        endDate: endDate || new Date().toISOString().split('T')[0]
+      })
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { error: `Ошибка получения перевозок: ${error}` };
+  }
+}
+
+async function getDocuments(type?: string) {
+  // Заглушка для получения документов
+  return {
+    invoices: [
+      { id: "INV-001", date: "2024-10-01", amount: 50000, status: "paid" },
+      { id: "INV-002", date: "2024-10-05", amount: 75000, status: "pending" }
+    ],
+    acts: [
+      { id: "ACT-001", date: "2024-10-02", description: "Оказание услуг перевозки" }
+    ]
+  };
+}
+
+// Роут для ChatGPT с function calling
 app.post("/api/chat-gpt", async (c) => {
   try {
-    console.log("[GPT] Testing ChatGPT API connection...");
+    console.log("[GPT] ChatGPT API request with function calling...");
     
     const body = await c.req.json();
     const { messages } = body;
@@ -122,12 +165,97 @@ app.post("/api/chat-gpt", async (c) => {
     }
     
     const openaiClient = getOpenAI();
-    const completion = await openaiClient.chat.completions.create({
+    
+    // Определяем доступные функции для ChatGPT
+    const tools = [
+      {
+        type: "function" as const,
+        function: {
+          name: "getPerevozki",
+          description: "Получить список перевозок за указанный период. Используй эту функцию когда пользователь спрашивает о перевозках, заказах, грузах.",
+          parameters: {
+            type: "object",
+            properties: {
+              startDate: {
+                type: "string",
+                description: "Дата начала периода в формате YYYY-MM-DD"
+              },
+              endDate: {
+                type: "string",
+                description: "Дата окончания периода в формате YYYY-MM-DD"
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function" as const,
+        function: {
+          name: "getDocuments",
+          description: "Получить список документов (счета, акты, накладные). Используй когда пользователь спрашивает о документах, счетах, актах.",
+          parameters: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["invoice", "act", "upd", "all"],
+                description: "Тип документов для получения"
+              }
+            }
+          }
+        }
+      }
+    ];
+    
+    let completion = await openaiClient.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: messages,
+      tools: tools,
+      tool_choice: "auto",
       temperature: 0.7,
       max_tokens: 1000,
     });
+    
+    // Если ChatGPT хочет вызвать функцию
+    if (completion.choices[0].message.tool_calls) {
+      const toolCalls = completion.choices[0].message.tool_calls;
+      const functionResults: any[] = [];
+      
+      for (const toolCall of toolCalls) {
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
+        
+        console.log(`[GPT] Calling function: ${functionName} with args:`, functionArgs);
+        
+        let result;
+        if (functionName === "getPerevozki") {
+          result = await getPerevozki(functionArgs.startDate, functionArgs.endDate);
+        } else if (functionName === "getDocuments") {
+          result = await getDocuments(functionArgs.type);
+        }
+        
+        functionResults.push({
+          tool_call_id: toolCall.id,
+          role: "tool",
+          name: functionName,
+          content: JSON.stringify(result)
+        });
+      }
+      
+      // Добавляем результаты функций и запрашиваем финальный ответ
+      const updatedMessages = [
+        ...messages,
+        completion.choices[0].message,
+        ...functionResults
+      ];
+      
+      completion = await openaiClient.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: updatedMessages,
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+    }
 
     return c.json({
       success: true,
