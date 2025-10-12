@@ -291,13 +291,24 @@ export const [CompanyProvider, useCompanies] = createContextHook(() => {
     console.log('Email:', email);
 
     try {
-      console.log('Calling trpcClient.company.fetchPerevozki.mutate...');
-      const result = await trpcClient.company.fetchPerevozki.mutate({
-        email,
-        password,
+      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'https://api.gapaf.ru';
+      console.log('Calling API:', `${apiUrl}/api/add-company`);
+      
+      const response = await fetch(`${apiUrl}/api/add-company`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
-      console.log('tRPC result:', result);
+      console.log('Response status:', response.status);
+      
+      const result = await response.json();
+      console.log('API result:', result);
 
       if (!result.success || !result.data) {
         console.log('API request failed:', result.error);

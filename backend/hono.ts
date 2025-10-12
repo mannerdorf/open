@@ -286,6 +286,78 @@ app.post("/api/chat-gpt", async (c) => {
   }
 });
 
+// Роут для добавления компании (альтернатива tRPC)
+app.post("/api/add-company", async (c) => {
+  try {
+    console.log("[ADD-COMPANY] Request received");
+    
+    const body = await c.req.json();
+    const { email, password } = body;
+    
+    if (!email || !password) {
+      return c.json({
+        success: false,
+        error: "Email и password обязательны"
+      }, 400);
+    }
+    
+    const onecUrl = process.env.ONEC_API_URL || 'https://tdn.postb.ru';
+    
+    // Динамический период: последние 12 месяцев
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setFullYear(startDate.getFullYear() - 1);
+    
+    const formatDate = (date: Date): string => {
+      return date.toISOString().split('T')[0];
+    };
+    
+    const dateB = formatDate(startDate);
+    const dateE = formatDate(endDate);
+    
+    const fullUrl = `${onecUrl}/workbase/hs/DeliveryWebService/GetPerevozki?DateB=${dateB}&DateE=${dateE}`;
+    
+    console.log("[ADD-COMPANY] Calling 1C API:", fullUrl);
+    console.log("[ADD-COMPANY] Auth user:", email);
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${email}:${password}`).toString('base64')}`
+      }
+    });
+    
+    console.log("[ADD-COMPANY] 1C API Response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[ADD-COMPANY] 1C API Error:", errorText);
+      return c.json({
+        success: false,
+        error: `Ошибка ${response.status}: ${errorText || 'Неверный логин или пароль'}`,
+        data: null
+      }, response.status);
+    }
+    
+    const data = await response.json();
+    console.log("[ADD-COMPANY] Success, items count:", Array.isArray(data) ? data.length : 'not an array');
+    
+    return c.json({
+      success: true,
+      data: data,
+      message: "Компания успешно добавлена"
+    });
+    
+  } catch (error) {
+    console.error("[ADD-COMPANY] Error:", error);
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+      message: "Ошибка подключения к 1C API"
+    }, 500);
+  }
+});
+
 // Простой тестовый роут для API 1С
 app.get("/api/test-perevozki", async (c) => {
   try {
