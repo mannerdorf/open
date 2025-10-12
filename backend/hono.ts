@@ -101,6 +101,7 @@ app.get("/", (c) => {
     endpoints: {
       api: "/api",
       trpc: "/api/trpc",
+      addCompany: "/api/add-company",
       test: "/api/test-perevozki"
     }
   });
