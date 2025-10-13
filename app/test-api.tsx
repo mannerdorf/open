@@ -145,7 +145,7 @@ export default function TestApiScreen() {
     setIsGptLoading(true);
     
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'http://localhost:3000';
+      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'https://open-production.up.railway.app';
       const response = await fetch(`${apiUrl}/api/chat-gpt`, {
         method: 'POST',
         headers: {

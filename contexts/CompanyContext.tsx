@@ -291,7 +291,7 @@ export const [CompanyProvider, useCompanies] = createContextHook(() => {
     console.log('Email:', email);
 
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'https://api.gapaf.ru';
+      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'https://open-production.up.railway.app';
       console.log('Calling API:', `${apiUrl}/api/add-company`);
       
       const response = await fetch(`${apiUrl}/api/add-company`, {

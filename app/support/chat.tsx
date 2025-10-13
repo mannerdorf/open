@@ -36,7 +36,7 @@ export default function ChatScreen() {
 
   const sendToChatGPT = async (userMessage: string, currentMessages: Message[]) => {
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'https://api.gapaf.ru';
+      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'https://open-production.up.railway.app';
       
       // Подготавливаем сообщения для ChatGPT
       const chatMessages = [
