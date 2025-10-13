@@ -315,7 +315,7 @@ export const [CompanyProvider, useCompanies] = createContextHook(() => {
         return { success: false, error: result.error || 'Неверный логин или пароль' };
       }
 
-      const data: ApiPerevozka[] = result.data;
+      const data: any[] = result.data;
       console.log('API Response:', data);
 
       const newCompany: Company = {
@@ -337,7 +337,55 @@ export const [CompanyProvider, useCompanies] = createContextHook(() => {
       setCompanies(updatedCompanies);
       console.log('Companies updated');
 
-      const newOrders = data.map(apiPerevozka => convertApiPerevozkaToOrder(apiPerevozka, newCompany.id));
+      // Конвертируем данные из API в формат Order напрямую
+      const newOrders: Order[] = data.map((item: any) => ({
+        id: `order-${item.number}-${Date.now()}`,
+        companyId: newCompany.id,
+        customer: {
+          name: item.sender || '*',
+          inn: '*',
+          phone: '*',
+          address: '*',
+        },
+        sender: {
+          name: item.sender || '*',
+          inn: '*',
+          phone: '*',
+          address: '*',
+        },
+        receiver: {
+          name: '*',
+          inn: '*',
+          phone: '*',
+          address: '*',
+        },
+        route: {
+          from: {
+            address: item.from || '*',
+            city: '*',
+          },
+          to: {
+            address: item.to || '*',
+            city: '*',
+          },
+        },
+        cargo: {
+          name: item.cargo || `Груз #${item.number}`,
+          weight: item.weight || 0,
+          volume: item.volume || 0,
+          places: item.places || 0,
+        },
+        status: item.status === 'Доставлен' ? 'delivered' : 
+                item.status === 'В пути' ? 'in_transit' : 'created',
+        createdAt: item.dateStart ? new Date(item.dateStart).toISOString() : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        totalCost: item.sum || 0,
+        paymentStatus: item.billStatus === 'Оплачен' ? 'paid' : 'pending',
+        documents: [],
+        claims: [],
+        isArchived: false,
+      }));
+      
       console.log('Orders created from API:', newOrders.length, 'orders');
 
       if (newOrders.length > 0) {
@@ -378,7 +426,7 @@ export const [CompanyProvider, useCompanies] = createContextHook(() => {
       
       return { success: false, error: 'Ошибка подключения к серверу. Проверьте, что backend запущен.' };
     }
-  }, [companies, selectCompany, convertApiPerevozkaToOrder]);
+  }, [companies, selectCompany]);
 
   const addCompany = useCallback(async (inn: string, verificationCode: string): Promise<{ success: boolean; error?: string; company?: Company }> => {
     console.log('=== addCompany called ===');
