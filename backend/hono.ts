@@ -356,62 +356,126 @@ app.post("/api/add-company", async (c) => {
       if (healthCheck.status === 403 || healthCheck.status === 404) {
         console.log("[ADD-COMPANY] 1C API недоступен, используем мок-данные");
         
-        // Возвращаем мок-данные для тестирования
+        // Возвращаем мок-данные для тестирования в формате 1C API
         const mockData = [
           {
-            id: "MOCK-001",
-            date: "2024-10-12",
-            from: "Москва",
-            to: "Санкт-Петербург",
-            cargo: "Тестовый груз",
-            weight: 1000,
-            status: "В пути"
+            Number: "MOCK-001",
+            DatePrih: "2024-10-12T00:00:00",
+            DateVr: "2024-10-15T00:00:00",
+            State: "В пути",
+            Mest: "1",
+            PW: "1000.0",
+            W: "1000",
+            Value: "2.5",
+            Sum: "15000",
+            StateBill: "Ожидает оплаты",
+            Sender: "Москва"
           },
           {
-            id: "MOCK-002", 
-            date: "2024-10-11",
-            from: "Екатеринбург",
-            to: "Новосибирск",
-            cargo: "Документы",
-            weight: 5,
-            status: "Доставлен"
+            Number: "MOCK-002", 
+            DatePrih: "2024-10-11T00:00:00",
+            DateVr: "2024-10-14T00:00:00",
+            State: "Доставлен",
+            Mest: "2",
+            PW: "5.0",
+            W: "5",
+            Value: "0.1",
+            Sum: "2500",
+            StateBill: "Оплачен",
+            Sender: "Екатеринбург"
           }
         ];
         
+        // Парсим мок-данные в нужный формат
+        const parsedMockData = mockData.map((item: any) => ({
+          id: item.Number || `SHIP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          number: item.Number,
+          dateStart: item.DatePrih ? new Date(item.DatePrih).toISOString().split('T')[0] : null,
+          dateEnd: item.DateVr ? new Date(item.DateVr).toISOString().split('T')[0] : null,
+          status: item.State || 'Неизвестно',
+          places: parseInt(item.Mest) || 0,
+          paidWeight: parseFloat(item.PW) || 0,
+          weight: parseFloat(item.W) || 0,
+          volume: parseFloat(item.Value) || 0,
+          sum: parseFloat(item.Sum) || 0,
+          billStatus: item.StateBill || 'Неизвестно',
+          sender: item.Sender || 'Неизвестно',
+          // Дополнительные поля для совместимости
+          from: item.Sender || 'Неизвестно',
+          to: 'Назначение не указано',
+          cargo: `Груз #${item.Number}`,
+          weightDisplay: `${item.W} кг`,
+          paidWeightDisplay: `${item.PW} кг`,
+          volumeDisplay: `${item.Value} м³`,
+          sumDisplay: `${item.Sum} руб.`
+        }));
+        
         return c.json({
           success: true,
-          data: mockData,
+          data: parsedMockData,
           message: "Компания добавлена (используются тестовые данные - 1C API недоступен)"
         });
       }
     } catch (apiError) {
       console.log("[ADD-COMPANY] 1C API недоступен, используем мок-данные:", apiError);
       
-      // Возвращаем мок-данные для тестирования
+      // Возвращаем мок-данные для тестирования в формате 1C API
       const mockData = [
         {
-          id: "MOCK-001",
-          date: "2024-10-12",
-          from: "Москва",
-          to: "Санкт-Петербург", 
-          cargo: "Тестовый груз",
-          weight: 1000,
-          status: "В пути"
+          Number: "MOCK-001",
+          DatePrih: "2024-10-12T00:00:00",
+          DateVr: "2024-10-15T00:00:00",
+          State: "В пути",
+          Mest: "1",
+          PW: "1000.0",
+          W: "1000",
+          Value: "2.5",
+          Sum: "15000",
+          StateBill: "Ожидает оплаты",
+          Sender: "Москва"
         },
         {
-          id: "MOCK-002",
-          date: "2024-10-11",
-          from: "Екатеринбург",
-          to: "Новосибирск",
-          cargo: "Документы", 
-          weight: 5,
-          status: "Доставлен"
+          Number: "MOCK-002",
+          DatePrih: "2024-10-11T00:00:00",
+          DateVr: "2024-10-14T00:00:00",
+          State: "Доставлен",
+          Mest: "2",
+          PW: "5.0",
+          W: "5",
+          Value: "0.1",
+          Sum: "2500",
+          StateBill: "Оплачен",
+          Sender: "Екатеринбург"
         }
       ];
       
+      // Парсим мок-данные в нужный формат
+      const parsedMockData = mockData.map((item: any) => ({
+        id: item.Number || `SHIP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        number: item.Number,
+        dateStart: item.DatePrih ? new Date(item.DatePrih).toISOString().split('T')[0] : null,
+        dateEnd: item.DateVr ? new Date(item.DateVr).toISOString().split('T')[0] : null,
+        status: item.State || 'Неизвестно',
+        places: parseInt(item.Mest) || 0,
+        paidWeight: parseFloat(item.PW) || 0,
+        weight: parseFloat(item.W) || 0,
+        volume: parseFloat(item.Value) || 0,
+        sum: parseFloat(item.Sum) || 0,
+        billStatus: item.StateBill || 'Неизвестно',
+        sender: item.Sender || 'Неизвестно',
+        // Дополнительные поля для совместимости
+        from: item.Sender || 'Неизвестно',
+        to: 'Назначение не указано',
+        cargo: `Груз #${item.Number}`,
+        weightDisplay: `${item.W} кг`,
+        paidWeightDisplay: `${item.PW} кг`,
+        volumeDisplay: `${item.Value} м³`,
+        sumDisplay: `${item.Sum} руб.`
+      }));
+      
       return c.json({
         success: true,
-        data: mockData,
+        data: parsedMockData,
         message: "Компания добавлена (используются тестовые данные - 1C API недоступен)"
       });
     }
