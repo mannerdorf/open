@@ -25,6 +25,12 @@ export default function SupportLayout() {
           title: 'Сообщить об ошибке',
         }}
       />
+      <Stack.Screen 
+        name="api" 
+        options={{
+          title: 'API Интеграция',
+        }}
+      />
     </Stack>
   );
 }

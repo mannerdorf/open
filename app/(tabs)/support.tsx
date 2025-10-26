@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Phone, Mail, MessageCircle, HelpCircle, ChevronRight, Menu, AlertTriangle, Settings } from 'lucide-react-native';
+import { Phone, Mail, MessageCircle, HelpCircle, ChevronRight, Menu, AlertTriangle, Settings, Code } from 'lucide-react-native';
 import { useThemeColors } from '@/constants/colors';
 import { useRouter } from 'expo-router';
 
@@ -44,6 +44,11 @@ export default function SupportScreen() {
   const handleTestAPI = useCallback(() => {
     console.log('[Support] Test API pressed');
     router.push('/test-api');
+  }, [router]);
+
+  const handleAPIIntegration = useCallback(() => {
+    console.log('[Support] API Integration pressed');
+    router.push('/support/api');
   }, [router]);
 
   return (
@@ -138,6 +143,20 @@ export default function SupportScreen() {
               <HelpCircle size={20} color={Colors.primary} />
             </View>
             <Text style={[styles.menuText, { color: Colors.text }]}>Часто задаваемые вопросы</Text>
+            <ChevronRight size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.menuItem, { backgroundColor: Colors.surface1 }]} 
+            onPress={handleAPIIntegration}
+            testID="api-integration-button"
+            accessibilityRole="button"
+            accessibilityLabel="API Интеграция"
+          >
+            <View style={[styles.menuIcon, { backgroundColor: Colors.surface2 }]}>
+              <Code size={20} color={Colors.primary} />
+            </View>
+            <Text style={[styles.menuText, { color: Colors.text }]}>API Интеграция</Text>
             <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
 
