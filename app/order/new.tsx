@@ -143,6 +143,19 @@ const WORKING_HOURS_OPTIONS = [
   '24/7',
 ];
 
+const ROUTE_OPTIONS = [
+  'Москва - Калининград',
+  'Калининград - Москва',
+  'Москва - Санкт-Петербург',
+  'Санкт-Петербург - Москва',
+  'Москва - Казань',
+  'Казань - Москва',
+  'Москва - Екатеринбург',
+  'Екатеринбург - Москва',
+  'Москва - Новосибирск',
+  'Новосибирск - Москва',
+];
+
 export default function NewOrderScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -171,6 +184,7 @@ export default function NewOrderScreen() {
   const [receiverAddress, setReceiverAddress] = useState('');
   const [receiverWorkingHours, setReceiverWorkingHours] = useState('');
   const [showReceiverHoursDropdown, setShowReceiverHoursDropdown] = useState(false);
+  const [showRouteDropdown, setShowRouteDropdown] = useState(false);
 
   const [loadingReceiverCompany, setLoadingReceiverCompany] = useState(false);
   
@@ -537,13 +551,15 @@ export default function NewOrderScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Маршрут</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Москва - Калининград"
-                placeholderTextColor={Colors.textTertiary}
-                value={route}
-                onChangeText={setRoute}
-              />
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowRouteDropdown(true)}
+              >
+                <Text style={[styles.dropdownButtonText, !route && styles.dropdownPlaceholder]}>
+                  {route || 'Выберите маршрут'}
+                </Text>
+                <ChevronDown size={20} color={Colors.textSecondary} />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.inputGroup}>
@@ -862,6 +878,37 @@ export default function NewOrderScreen() {
                   }}
                 >
                   <Text style={styles.modalItemText}>{hours}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showRouteDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRouteDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowRouteDropdown(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Выберите маршрут</Text>
+            <ScrollView style={styles.modalList}>
+              {ROUTE_OPTIONS.map((routeOption) => (
+                <TouchableOpacity
+                  key={routeOption}
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setRoute(routeOption);
+                    setShowRouteDropdown(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{routeOption}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
