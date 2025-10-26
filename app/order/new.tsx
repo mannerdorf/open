@@ -446,7 +446,7 @@ export default function NewOrderScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Часы работы (необязательно)</Text>
+              <Text style={styles.label}>Часы работы</Text>
               <TouchableOpacity
                 style={styles.dropdownButton}
                 onPress={() => setShowSenderHoursDropdown(true)}
@@ -520,7 +520,7 @@ export default function NewOrderScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Часы работы (необязательно)</Text>
+              <Text style={styles.label}>Часы работы</Text>
               <TouchableOpacity
                 style={styles.dropdownButton}
                 onPress={() => setShowReceiverHoursDropdown(true)}
@@ -663,7 +663,7 @@ export default function NewOrderScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Описание груза (необязательно)</Text>
+              <Text style={styles.label}>Описание груза</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Этикетки, упаковка и т.д."
@@ -674,7 +674,7 @@ export default function NewOrderScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Габариты (необязательно)</Text>
+              <Text style={styles.label}>Габариты</Text>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
                   <TextInput
