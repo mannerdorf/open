@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, RefreshControl, Modal, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Package, ChevronRight, Clock, Building2, Check, Plus } from 'lucide-react-native';
+import { Search, Package, ChevronRight, Clock, Building2, Check, Plus, Copy } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useThemeColors } from '@/constants/colors';
 import { useCompanies } from '@/contexts/CompanyContext';
@@ -330,7 +330,24 @@ export default function OrdersScreen() {
                       </Text>
                     </View>
                   </View>
-                  <ChevronRight size={20} color={Colors.textSecondary} />
+                  <View style={styles.orderActions}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: Colors.surface2 }]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        router.push({
+                          pathname: '/order/new',
+                          params: {
+                            duplicate: 'true',
+                            orderId: order.id,
+                          },
+                        });
+                      }}
+                    >
+                      <Copy size={18} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <ChevronRight size={20} color={Colors.textSecondary} />
+                  </View>
                 </View>
 
                 <View style={styles.routeContainer}>
@@ -733,5 +750,17 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  orderActions: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
 });

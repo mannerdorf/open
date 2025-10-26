@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Modal, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState, useCallback, useRef } from 'react';
 import { MapPin, Package, Calendar as CalendarIcon, User, Building2, ChevronDown } from 'lucide-react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -151,53 +151,66 @@ const ROUTE_OPTIONS = [
 export default function NewOrderScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { companies, selectedCompanyId, fetchCompanyByINN, createOrder } = useCompanies();
+  const params = useLocalSearchParams();
+  const { companies, selectedCompanyId, fetchCompanyByINN, createOrder, orders } = useCompanies();
   const [step, setStep] = useState(1);
   
-  const [selectedCompany, setSelectedCompany] = useState<string>(selectedCompanyId || '');
-  const [customerName, setCustomerName] = useState('');
-  const [customerInn, setCustomerInn] = useState('');
-  const [customerPhone] = useState('');
-  const [customerAddress] = useState('');
-  const [transportationType, setTransportationType] = useState<'auto' | 'ferry'>('auto');
+  const isDuplicate = params.duplicate === 'true';
+  const duplicateOrderId = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
+  const duplicateOrder = isDuplicate && duplicateOrderId ? orders.find(o => o.id === duplicateOrderId) : null;
+
+  const [selectedCompany, setSelectedCompany] = useState<string>(duplicateOrder?.companyId || selectedCompanyId || '');
+  const [customerName, setCustomerName] = useState(duplicateOrder?.customer.name || '');
+  const [customerInn, setCustomerInn] = useState(duplicateOrder?.customer.inn || '');
+  const [customerPhone] = useState(duplicateOrder?.customer.phone || '');
+  const [customerAddress] = useState(duplicateOrder?.customer.address || '');
+  const [transportationType, setTransportationType] = useState<'auto' | 'ferry'>(duplicateOrder?.customer.transportationType || 'auto');
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
   
-  const [senderInn, setSenderInn] = useState('');
-  const [senderName, setSenderName] = useState('');
-  const [senderPhone, setSenderPhone] = useState('');
-  const [senderAddress, setSenderAddress] = useState('');
-  const [senderWorkingHours, setSenderWorkingHours] = useState('');
+  const [senderInn, setSenderInn] = useState(duplicateOrder?.sender.inn || '');
+  const [senderName, setSenderName] = useState(duplicateOrder?.sender.name || '');
+  const [senderPhone, setSenderPhone] = useState(duplicateOrder?.sender.phone || '');
+  const [senderAddress, setSenderAddress] = useState(duplicateOrder?.sender.address || '');
+  const [senderWorkingHours, setSenderWorkingHours] = useState(duplicateOrder?.sender.workingHours || '');
   const [showSenderHoursDropdown, setShowSenderHoursDropdown] = useState(false);
   const [loadingSenderCompany, setLoadingSenderCompany] = useState(false);
   
-  const [receiverInn, setReceiverInn] = useState('');
-  const [receiverName, setReceiverName] = useState('');
-  const [receiverPhone, setReceiverPhone] = useState('');
-  const [receiverAddress, setReceiverAddress] = useState('');
-  const [receiverWorkingHours, setReceiverWorkingHours] = useState('');
+  const [receiverInn, setReceiverInn] = useState(duplicateOrder?.receiver.inn || '');
+  const [receiverName, setReceiverName] = useState(duplicateOrder?.receiver.name || '');
+  const [receiverPhone, setReceiverPhone] = useState(duplicateOrder?.receiver.phone || '');
+  const [receiverAddress, setReceiverAddress] = useState(duplicateOrder?.receiver.address || '');
+  const [receiverWorkingHours, setReceiverWorkingHours] = useState(duplicateOrder?.receiver.workingHours || '');
   const [showReceiverHoursDropdown, setShowReceiverHoursDropdown] = useState(false);
   const [showRouteDropdown, setShowRouteDropdown] = useState(false);
 
   const [loadingReceiverCompany, setLoadingReceiverCompany] = useState(false);
   
-  const [route, setRoute] = useState('');
-  const [fromAddressShort, setFromAddressShort] = useState('');
-  const [toAddressShort, setToAddressShort] = useState('');
+  const [route, setRoute] = useState(
+    duplicateOrder ? `${duplicateOrder.route.from.city} - ${duplicateOrder.route.to.city}` : ''
+  );
+  const [fromAddressShort, setFromAddressShort] = useState(duplicateOrder?.route.from.address || '');
+  const [toAddressShort, setToAddressShort] = useState(duplicateOrder?.route.to.address || '');
   
-  const [cargoType, setCargoType] = useState<'pallet' | 'box' | 'envelope' | 'other'>('pallet');
-  const [cargoQty, setCargoQty] = useState('');
-  const [cargoWeight, setCargoWeight] = useState('');
-  const [cargoVolume, setCargoVolume] = useState('');
-  const [cargoDeclaredValue, setCargoDeclaredValue] = useState('');
-  const [cargoDescription, setCargoDescription] = useState('');
-  const [cargoLength, setCargoLength] = useState('');
-  const [cargoWidth, setCargoWidth] = useState('');
-  const [cargoHeight, setCargoHeight] = useState('');
+  const [cargoType, setCargoType] = useState<'pallet' | 'box' | 'envelope' | 'other'>(duplicateOrder?.cargo.type || 'pallet');
+  const [cargoQty, setCargoQty] = useState(duplicateOrder?.cargo.qty ? String(duplicateOrder.cargo.qty) : '');
+  const [cargoWeight, setCargoWeight] = useState(duplicateOrder?.cargo.weightKg ? String(duplicateOrder.cargo.weightKg) : '');
+  const [cargoVolume, setCargoVolume] = useState(duplicateOrder?.cargo.volumeM3 ? String(duplicateOrder.cargo.volumeM3) : '');
+  const [cargoDeclaredValue, setCargoDeclaredValue] = useState(duplicateOrder?.cargo.declaredValue ? String(duplicateOrder.cargo.declaredValue) : '');
+  const [cargoDescription, setCargoDescription] = useState(duplicateOrder?.cargo.description || '');
+  const [cargoLength, setCargoLength] = useState(
+    duplicateOrder?.cargo.dimensions ? duplicateOrder.cargo.dimensions.split('*')[0] || '' : ''
+  );
+  const [cargoWidth, setCargoWidth] = useState(
+    duplicateOrder?.cargo.dimensions ? duplicateOrder.cargo.dimensions.split('*')[1] || '' : ''
+  );
+  const [cargoHeight, setCargoHeight] = useState(
+    duplicateOrder?.cargo.dimensions ? duplicateOrder.cargo.dimensions.split('*')[2] || '' : ''
+  );
   
-  const [servicePickup, setServicePickup] = useState(false);
-  const [serviceDoorDelivery, setServiceDoorDelivery] = useState(false);
+  const [servicePickup, setServicePickup] = useState(duplicateOrder?.services.pickup || false);
+  const [serviceDoorDelivery, setServiceDoorDelivery] = useState(duplicateOrder?.services.doorDelivery || false);
   
-  const [plannedLoadingDate, setPlannedLoadingDate] = useState('');
+  const [plannedLoadingDate, setPlannedLoadingDate] = useState(duplicateOrder?.plannedLoadingDate || '');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState(new Date());
 
