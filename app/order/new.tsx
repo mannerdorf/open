@@ -1230,7 +1230,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.text,
+    color: '#000000',
     marginBottom: 16,
   },
   modalList: {
@@ -1243,7 +1243,7 @@ const styles = StyleSheet.create({
   },
   modalItemText: {
     fontSize: 16,
-    color: Colors.text,
+    color: '#000000',
     fontWeight: '600',
   },
   modalItemSubtext: {
