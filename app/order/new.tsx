@@ -242,6 +242,10 @@ export default function NewOrderScreen() {
   }, [fetchCompanyByINN]);
 
   const handleCreateOrder = useCallback(async () => {
+    console.log('=== handleCreateOrder called ===');
+    console.log('Selected company:', selectedCompany);
+    console.log('Step:', step);
+    
     const dimensions = [cargoLength, cargoWidth, cargoHeight].filter(d => d).join('*');
     
     const newOrder: Order = {
@@ -308,9 +312,14 @@ export default function NewOrderScreen() {
       },
     };
 
+    console.log('Creating order:', newOrder);
+    
     const result = await createOrder(newOrder);
     
+    console.log('Create order result:', result);
+    
     if (result.success) {
+      console.log('Order created successfully');
       Alert.alert('Успешно', `Перевозка ${newOrder.id} создана`, [
         {
           text: 'OK',
@@ -318,9 +327,11 @@ export default function NewOrderScreen() {
         },
       ]);
     } else {
+      console.log('Order creation failed:', result.error);
       Alert.alert('Ошибка', result.error || 'Не удалось создать перевозку');
     }
   }, [
+    step,
     selectedCompany, customerName, customerInn, customerPhone, customerAddress, transportationType,
     senderName, senderInn, senderPhone, senderAddress, senderWorkingHours,
     receiverName, receiverInn, receiverPhone, receiverAddress, receiverWorkingHours,
@@ -774,9 +785,12 @@ export default function NewOrderScreen() {
         <TouchableOpacity
           style={[styles.nextButton, step === 1 && { flex: 1 }]}
           onPress={() => {
+            console.log('Next/Create button pressed, current step:', step);
             if (step < 6) {
+              console.log('Moving to next step:', step + 1);
               setStep(step + 1);
             } else {
+              console.log('Calling handleCreateOrder');
               handleCreateOrder();
             }
           }}
