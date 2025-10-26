@@ -112,7 +112,7 @@ export default function LoginScreen() {
     }
 
     if (otp !== '111111') {
-      setError('Неверный код. Используйте тестовый код: 111111');
+      setError('Неверный код. Попробуйте еще раз');
       return;
     }
 
