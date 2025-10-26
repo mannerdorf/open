@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Share, Modal, Pressable, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FileText, CheckCircle, Clock, AlertCircle, Search, Building2, Share2, CreditCard, ChevronDown, ChevronUp, Download } from 'lucide-react-native';
+import { FileText, CheckCircle, Clock, AlertCircle, Search, Building2, Share2, CreditCard, ChevronDown, ChevronUp, Download, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useThemeColors } from '@/constants/colors';
 import { useCompanies } from '@/contexts/CompanyContext';
@@ -10,13 +10,14 @@ export default function DocumentsScreen() {
   const insets = useSafeAreaInsets();
   const Colors = useThemeColors();
   const router = useRouter();
-  const { documents, selectedCompanyId, companies, orders, addReconciliationAct } = useCompanies();
+  const { documents, selectedCompanyId, companies, orders, addReconciliationAct, selectCompany } = useCompanies();
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [showCompanySelector, setShowCompanySelector] = useState(false);
 
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
   const [customDateVisible, setCustomDateVisible] = useState(false);
@@ -286,7 +287,12 @@ export default function DocumentsScreen() {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + 20, backgroundColor: Colors.surface1 }]}>
         <View style={styles.headerContent}>
-          <View style={[styles.companyBadge, { backgroundColor: Colors.surface2 }]}>
+          <TouchableOpacity
+            testID="documents-company-badge"
+            onLongPress={() => setShowCompanySelector(true)}
+            activeOpacity={0.8}
+            style={[styles.companyBadge, { backgroundColor: Colors.surface2 }]}
+          >
             <Building2 size={18} color={Colors.primary} />
             <Text 
               style={[
@@ -298,7 +304,7 @@ export default function DocumentsScreen() {
             >
               {companies.find(c => c.id === selectedCompanyId)?.name ?? 'Выберите компанию'}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {searchExpanded ? (
             <View style={[styles.searchField, { backgroundColor: Colors.surface2, flex: 1 }]}>
@@ -985,6 +991,49 @@ export default function DocumentsScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={showCompanySelector}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCompanySelector(false)}
+      >
+        <Pressable 
+          style={styles.companySelectorOverlay}
+          onPress={() => setShowCompanySelector(false)}
+        >
+          <View style={[styles.companySelectorContent, { backgroundColor: Colors.surface1 }]}>
+            <Text style={[styles.modalTitle, { color: Colors.text }]}>Выберите компанию</Text>
+            <View style={styles.companiesList}>
+              {companies.map((company) => (
+                <TouchableOpacity
+                  key={company.id}
+                  style={[
+                    styles.companyOption,
+                    { borderBottomColor: Colors.surface2 },
+                    selectedCompanyId === company.id && { backgroundColor: `${Colors.primary}15` },
+                  ]}
+                  onPress={() => {
+                    selectCompany(company.id);
+                    setShowCompanySelector(false);
+                  }}
+                >
+                  <View style={[styles.companyIconSmall, { backgroundColor: Colors.surface2 }]}>
+                    <Building2 size={20} color={Colors.primary} />
+                  </View>
+                  <View style={styles.companyOptionInfo}>
+                    <Text style={[styles.companyOptionName, { color: Colors.text }]}>{company.name}</Text>
+                    <Text style={[styles.companyOptionInn, { color: Colors.textSecondary }]}>ИНН: {company.inn}</Text>
+                  </View>
+                  {selectedCompanyId === company.id && (
+                    <Check size={20} color={Colors.primary} strokeWidth={2.5} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -1454,5 +1503,48 @@ const styles = StyleSheet.create({
   imageActionText: {
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  companySelectorOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+  },
+  companySelectorContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 24,
+    padding: 24,
+    maxHeight: '80%',
+  },
+  companiesList: {
+    gap: 0,
+  },
+  companyOption: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  companyIconSmall: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  companyOptionInfo: {
+    flex: 1,
+  },
+  companyOptionName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    marginBottom: 2,
+  },
+  companyOptionInn: {
+    fontSize: 13,
   },
 });
