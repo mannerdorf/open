@@ -174,9 +174,8 @@ export default function NewOrderScreen() {
 
   const [loadingReceiverCompany, setLoadingReceiverCompany] = useState(false);
   
-  const [fromCity, setFromCity] = useState('');
+  const [route, setRoute] = useState('');
   const [fromAddressShort, setFromAddressShort] = useState('');
-  const [toCity, setToCity] = useState('');
   const [toAddressShort, setToAddressShort] = useState('');
   
   const [cargoType, setCargoType] = useState<'pallet' | 'box' | 'envelope' | 'other'>('pallet');
@@ -264,8 +263,8 @@ export default function NewOrderScreen() {
         workingHours: receiverWorkingHours,
       },
       route: {
-        from: { city: fromCity, address: fromAddressShort },
-        to: { city: toCity, address: toAddressShort },
+        from: { city: route.split('-')[0]?.trim() || '', address: fromAddressShort },
+        to: { city: route.split('-')[1]?.trim() || '', address: toAddressShort },
       },
       cargo: {
         type: cargoType,
@@ -319,7 +318,7 @@ export default function NewOrderScreen() {
     selectedCompany, customerName, customerInn, customerPhone, customerAddress, transportationType,
     senderName, senderInn, senderPhone, senderAddress, senderWorkingHours,
     receiverName, receiverInn, receiverPhone, receiverAddress, receiverWorkingHours,
-    fromCity, fromAddressShort, toCity, toAddressShort,
+    route, fromAddressShort, toAddressShort,
     cargoType, cargoQty, cargoWeight, cargoVolume, cargoDeclaredValue, cargoDescription,
     cargoLength, cargoWidth, cargoHeight,
     servicePickup, serviceDoorDelivery,
@@ -537,12 +536,13 @@ export default function NewOrderScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Город отправления</Text>
-              <AddressInput
-                value={fromCity}
-                onChangeText={setFromCity}
-                placeholder="Москва"
-                onSelectAddress={(addr) => setFromCity(addr.data.city || addr.value)}
+              <Text style={styles.label}>Маршрут</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Москва - Калининград"
+                placeholderTextColor={Colors.textTertiary}
+                value={route}
+                onChangeText={setRoute}
               />
             </View>
 
@@ -553,16 +553,6 @@ export default function NewOrderScreen() {
                 onChangeText={setFromAddressShort}
                 placeholder="Склад А"
                 onSelectAddress={(addr) => setFromAddressShort(addr.value)}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Город назначения</Text>
-              <AddressInput
-                value={toCity}
-                onChangeText={setToCity}
-                placeholder="Калининград"
-                onSelectAddress={(addr) => setToCity(addr.data.city || addr.value)}
               />
             </View>
 
