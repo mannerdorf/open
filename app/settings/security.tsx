@@ -1,15 +1,15 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, TextInput, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, TextInput, ActivityIndicator, Modal, Linking, Clipboard } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useThemeColors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, Smartphone, Lock, Eye, X } from 'lucide-react-native';
-
+import { ChevronLeft, Smartphone, Lock, Eye, X, Shield, Copy, ExternalLink } from 'lucide-react-native';
+import { trpc } from '@/lib/trpc';
 import { useCompanies } from '@/contexts/CompanyContext';
 
 export default function SecurityScreen() {
   const Colors = useThemeColors();
-  const { biometricEnabled, pinEnabled, enableBiometric, disablePin, updateUserPhone, setupPin } = useAuth();
+  const { biometricEnabled, pinEnabled, enableBiometric, disablePin, updateUserPhone, setupPin, totpEnabled, enableTotp, disableTotp, user } = useAuth();
   const { companies } = useCompanies();
   const [autoLock, setAutoLock] = useState(true);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
@@ -20,6 +20,14 @@ export default function SecurityScreen() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [pinToggleRequested, setPinToggleRequested] = useState(false);
   const [pinInput, setPinInput] = useState('');
+  const [showTotpModal, setShowTotpModal] = useState(false);
+  const [totpStep, setTotpStep] = useState<'setup' | 'verify'>('setup');
+  const [totpSecret, setTotpSecret] = useState('');
+  const [totpQrUrl, setTotpQrUrl] = useState('');
+  const [totpVerifyCode, setTotpVerifyCode] = useState('');
+  
+  const generateTotpMutation = trpc.auth.generateTotp.useMutation();
+  const verifyTotpMutation = trpc.auth.verifyTotp.useMutation();
 
   const formatPhoneNumber = (text: string) => {
     let cleaned = text.replace(/\D/g, '');
@@ -78,6 +86,76 @@ export default function SecurityScreen() {
 
   const handleBiometricToggle = async (value: boolean) => {
     await enableBiometric(value);
+  };
+  
+  const handleSetupTotp = async () => {
+    setIsLoading(true);
+    try {
+      const result = await generateTotpMutation.mutateAsync({
+        userId: user?.phone || user?.email || user?.id || 'user',
+      });
+      setTotpSecret(result.secret);
+      setTotpQrUrl(result.qrCodeUrl);
+      setTotpStep('setup');
+      setShowTotpModal(true);
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось сгенерировать код');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleDisableTotp = () => {
+    Alert.alert(
+      'Отключить Google Authenticator?',
+      'Вы потеряете дополнительную защиту аккаунта',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Отключить', style: 'destructive', onPress: async () => {
+          await disableTotp();
+          Alert.alert('Готово', 'Google Authenticator отключен');
+        }}
+      ]
+    );
+  };
+  
+  const handleVerifyTotp = async () => {
+    if (totpVerifyCode.length !== 6) {
+      Alert.alert('Ошибка', 'Введите 6-значный код');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const result = await verifyTotpMutation.mutateAsync({
+        secret: totpSecret,
+        token: totpVerifyCode,
+      });
+      
+      if (result.success) {
+        await enableTotp(totpSecret);
+        setShowTotpModal(false);
+        setTotpVerifyCode('');
+        Alert.alert('Успех', 'Google Authenticator подключен');
+      } else {
+        Alert.alert('Ошибка', result.message);
+      }
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось проверить код');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleCopySecret = () => {
+    Clipboard.setString(totpSecret);
+    Alert.alert('Скопировано', 'Секретный ключ скопирован в буфер обмена');
+  };
+  
+  const handleOpenAuthenticator = () => {
+    Linking.openURL(totpQrUrl).catch(() => {
+      Alert.alert('Ошибка', 'Не удалось открыть приложение');
+    });
   };
 
   const handlePinToggle = async (value: boolean) => {
@@ -221,13 +299,37 @@ export default function SecurityScreen() {
               thumbColor={twoFactorEnabled ? Colors.primary : Colors.textSecondary}
             />
           </View>
+          
+          {twoFactorEnabled && (
+            <TouchableOpacity 
+              style={[styles.actionItem, { backgroundColor: Colors.surface1 }]} 
+              onPress={totpEnabled ? handleDisableTotp : handleSetupTotp}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: Colors.surface2 }]}>
+                <Shield size={20} color={Colors.primary} />
+              </View>
+              <View style={styles.actionInfo}>
+                <Text style={[styles.actionText, { color: Colors.text }]}>
+                  Google Authenticator
+                </Text>
+                {totpEnabled && (
+                  <Text style={[styles.actionSubtext, { color: Colors.textSecondary }]}>
+                    Подключено
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.actionArrow, { color: Colors.textSecondary }]}>
+                {totpEnabled ? 'Отключить' : 'Настроить'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: Colors.text }]}>Конфиденциальность</Text>
           <View style={[styles.infoCard, { backgroundColor: Colors.surface1 }]}>
             <Eye size={24} color={Colors.primary} />
-            <Text style={[styles.infoText, { color: Colors.textSecondary }]}>Мы серьезно относимся к защите ваших данных. Все данные передаются по защищенному соединению и хранятся в зашифрованном виде.</Text>
+            <Text style={[styles.infoCardText, { color: Colors.textSecondary }]}>Мы серьезно относимся к защите ваших данных. Все данные передаются по защищенному соединению и хранятся в зашифрованном виде.</Text>
           </View>
         </View>
       </ScrollView>
@@ -279,6 +381,78 @@ export default function SecurityScreen() {
           </View>
         </View>
       </Modal>
+      
+      <Modal visible={showTotpModal} transparent animationType="fade" onRequestClose={() => setShowTotpModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: Colors.background }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: Colors.text }]}>
+                {totpStep === 'setup' ? 'Настройка 2FA' : 'Проверка кода'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowTotpModal(false)}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {totpStep === 'setup' ? (
+              <View style={styles.modalBody}>
+                <Text style={[styles.modalLabel, { color: Colors.text }]}>Шаг 1: Откройте Google Authenticator</Text>
+                <TouchableOpacity 
+                  style={[styles.totpButton, { backgroundColor: Colors.surface1 }]} 
+                  onPress={handleOpenAuthenticator}
+                >
+                  <ExternalLink size={20} color={Colors.primary} />
+                  <Text style={[styles.totpButtonText, { color: Colors.text }]}>Открыть приложение</Text>
+                </TouchableOpacity>
+                
+                <Text style={[styles.modalLabel, { color: Colors.text, marginTop: 20 }]}>Шаг 2: Скопируйте ключ</Text>
+                <View style={[styles.secretContainer, { backgroundColor: Colors.surface1 }]}>
+                  <Text style={[styles.secretText, { color: Colors.text }]} selectable>{totpSecret}</Text>
+                  <TouchableOpacity onPress={handleCopySecret}>
+                    <Copy size={20} color={Colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                
+                <Text style={[styles.infoText, { color: Colors.textSecondary }]}>
+                  Или отсканируйте QR-код в приложении
+                </Text>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: Colors.primary, marginTop: 20 }]} 
+                  onPress={() => setTotpStep('verify')}
+                >
+                  <Text style={[styles.modalButtonText, { color: Colors.white }]}>Далее</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.modalBody}>
+                <Text style={[styles.modalLabel, { color: Colors.text }]}>Введите код из приложения</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.codeInput, { backgroundColor: Colors.surface1, color: Colors.text }]}
+                  placeholder="000000"
+                  placeholderTextColor={Colors.textSecondary}
+                  value={totpVerifyCode}
+                  onChangeText={(text) => setTotpVerifyCode(text.replace(/\D/g, '').slice(0, 6))}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  autoFocus
+                />
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: Colors.primary }]} 
+                  onPress={handleVerifyTotp} 
+                  disabled={isLoading || totpVerifyCode.length !== 6}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color={Colors.white} />
+                  ) : (
+                    <Text style={[styles.modalButtonText, { color: Colors.white }]}>Подтвердить</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -296,9 +470,12 @@ const styles = StyleSheet.create({
   settingDescription: { fontSize: 14, lineHeight: 20 },
   actionItem: { flexDirection: 'row' as const, padding: 18, borderRadius: 16, marginBottom: 8, alignItems: 'center' as const, gap: 12 },
   actionIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center' as const, justifyContent: 'center' as const },
-  actionText: { fontSize: 16, fontWeight: '500' as const, flex: 1 },
+  actionInfo: { flex: 1 },
+  actionText: { fontSize: 16, fontWeight: '500' as const },
+  actionSubtext: { fontSize: 13, marginTop: 2 },
+  actionArrow: { fontSize: 14, fontWeight: '500' as const },
   infoCard: { padding: 20, borderRadius: 16, flexDirection: 'row' as const, gap: 16, alignItems: 'flex-start' as const },
-  infoText: { flex: 1, fontSize: 14, lineHeight: 20 },
+  infoCardText: { flex: 1, fontSize: 14, lineHeight: 20 },
   modalOverlay: { flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const, padding: 20, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   modalContent: { width: '100%', maxWidth: 400, borderRadius: 20, padding: 24 },
   modalHeader: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const, marginBottom: 24 },
@@ -311,4 +488,9 @@ const styles = StyleSheet.create({
   codeInput: { textAlign: 'center' as const, fontSize: 24, letterSpacing: 8 },
   pinInlineContainer: { marginTop: 8, padding: 12, borderRadius: 12, borderWidth: 1, flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12 },
   pinInput: { flex: 1, height: 44, borderRadius: 10, paddingHorizontal: 12, borderWidth: 1, fontSize: 18, letterSpacing: 6, textAlign: 'center' as const },
+  totpButton: { flexDirection: 'row' as const, padding: 16, borderRadius: 12, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8 },
+  totpButtonText: { fontSize: 16, fontWeight: '600' as const },
+  secretContainer: { flexDirection: 'row' as const, padding: 16, borderRadius: 12, alignItems: 'center' as const, gap: 12 },
+  secretText: { flex: 1, fontSize: 14, fontFamily: 'monospace' as const },
+  infoText: { fontSize: 14, textAlign: 'center' as const, marginTop: 12 },
 });

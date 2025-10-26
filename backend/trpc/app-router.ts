@@ -4,6 +4,8 @@ import chatSend from "./routes/chat/send/route";
 import { chatGptProcedure } from "./routes/chat/gpt/route";
 import { sendOtpProcedure } from "./routes/auth/send-otp/route";
 import { verifyOtpProcedure } from "./routes/auth/verify-otp/route";
+import { generateTotpProcedure } from "./routes/auth/generate-totp/route";
+import { verifyTotpProcedure } from "./routes/auth/verify-totp/route";
 import { fetchPerevozki } from "./routes/company/fetch-perevozki/route";
 import { getDocumentsProcedure } from "./routes/onec/get-documents/route";
 
@@ -18,6 +20,8 @@ export const appRouter = createTRPCRouter({
   auth: createTRPCRouter({
     sendOtp: sendOtpProcedure,
     verifyOtp: verifyOtpProcedure,
+    generateTotp: generateTotpProcedure,
+    verifyTotp: verifyTotpProcedure,
   }),
   company: createTRPCRouter({
     fetchPerevozki: fetchPerevozki,

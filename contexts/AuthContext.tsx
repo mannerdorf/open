@@ -11,6 +11,8 @@ const PIN_KEY = '@haulz_pin';
 const PIN_LENGTH_KEY = '@haulz_pin_length';
 const USER_KEY = '@haulz_user';
 const SESSION_KEY = '@haulz_session';
+const TOTP_SECRET_KEY = '@haulz_totp_secret';
+const TOTP_ENABLED_KEY = '@haulz_totp_enabled';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type PinLength = 4 | 6;
@@ -33,6 +35,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [pin, setPin] = useState<string | null>(null);
   const [pinLength, setPinLength] = useState<PinLength>(4);
   const [needsAuth, setNeedsAuth] = useState(false);
+  const [totpSecret, setTotpSecret] = useState<string | null>(null);
+  const [totpEnabled, setTotpEnabled] = useState(false);
 
   const loadUserProfile = useCallback(async (userId: string) => {
     try {
@@ -79,6 +83,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const storedSessionStr = await AsyncStorage.getItem(SESSION_KEY);
       const storedSession = storedSessionStr ? (JSON.parse(storedSessionStr) as LocalSession) : null;
       setSession(storedSession);
+      
+      const [storedTotpSecret, storedTotpEnabled] = await Promise.all([
+        AsyncStorage.getItem(TOTP_SECRET_KEY),
+        AsyncStorage.getItem(TOTP_ENABLED_KEY),
+      ]);
+      setTotpSecret(storedTotpSecret);
+      setTotpEnabled(storedTotpEnabled === 'true');
 
       if (storedSession?.userId) {
         await loadUserProfile(storedSession.userId);
@@ -237,6 +248,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     setNeedsAuth(false);
   }, []);
 
+  const enableTotp = useCallback(async (secret: string) => {
+    await AsyncStorage.setItem(TOTP_SECRET_KEY, secret);
+    await AsyncStorage.setItem(TOTP_ENABLED_KEY, 'true');
+    setTotpSecret(secret);
+    setTotpEnabled(true);
+  }, []);
+
+  const disableTotp = useCallback(async () => {
+    await AsyncStorage.multiRemove([TOTP_SECRET_KEY, TOTP_ENABLED_KEY]);
+    setTotpSecret(null);
+    setTotpEnabled(false);
+  }, []);
+
   const getEffectiveTheme = useCallback(() => {
     if (themeMode === 'auto') {
       return systemColorScheme || 'dark';
@@ -256,6 +280,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     pinEnabled,
     pinLength,
     needsAuth,
+    totpSecret,
+    totpEnabled,
     signIn,
     signUp,
     verifyOtp,
@@ -270,6 +296,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     disablePin,
     verifyPin,
     authenticate,
+    enableTotp,
+    disableTotp,
   }), [
     user,
     session,
@@ -281,6 +309,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     pinEnabled,
     pinLength,
     needsAuth,
+    totpSecret,
+    totpEnabled,
     signIn,
     signUp,
     verifyOtp,
@@ -295,5 +325,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     disablePin,
     verifyPin,
     authenticate,
+    enableTotp,
+    disableTotp,
   ]);
 });
