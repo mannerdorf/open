@@ -810,9 +810,6 @@ export default function NewOrderScreen() {
                   onPress={() => handleCompanySelect(company.id)}
                 >
                   <Text style={styles.modalItemText}>{company.name}</Text>
-                  {company.inn && company.inn !== company.name && (
-                    <Text style={styles.modalItemSubtext}>ИНН: {company.inn}</Text>
-                  )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
