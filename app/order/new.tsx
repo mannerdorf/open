@@ -955,7 +955,7 @@ export default function NewOrderScreen() {
                   <DateTimePicker
                     value={tempDate}
                     mode="date"
-                    display="spinner"
+                    display="calendar"
                     onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                       if (selectedDate) {
                         setTempDate(selectedDate);
