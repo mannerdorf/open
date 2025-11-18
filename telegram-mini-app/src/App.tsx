@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { LoginScreen } from './screens/LoginScreen';
 
 declare global {
   interface Window {
-    Telegram?: any;
+    Telegram?: {
+      WebApp?: any;
+    };
   }
 }
 
 const App = () => {
-  const [username, setUsername] = useState<string | null>(null);
-
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     if (!tg) return;
@@ -16,27 +17,15 @@ const App = () => {
     tg.ready();
     tg.expand();
 
-    const user = tg.initDataUnsafe?.user;
-    if (user) {
-      setUsername(user.first_name || user.username || null);
-    }
-
+    // Пока main button просто закрывает мини-апп
     tg.MainButton.setText('Закрыть');
     tg.MainButton.show();
     tg.MainButton.onClick(() => tg.close());
   }, []);
 
   return (
-    <div style={{ padding: 16, fontFamily: 'system-ui' }}>
-      <h1>Haulz mini app</h1>
-      {username ? (
-        <p>Привет, {username}!</p>
-      ) : (
-        <p>Запущено внутри Telegram Mini App</p>
-      )}
-      <p style={{ fontSize: 12, opacity: 0.7 }}>
-        Этот экран потом заменим на реальный функционал.
-      </p>
+    <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+      <LoginScreen />
     </div>
   );
 };
