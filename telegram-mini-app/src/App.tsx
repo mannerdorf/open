@@ -29,14 +29,15 @@ const App = () => {
   return (
     <div
       style={{
-        padding: 20,
-        color: '#fff',
-        fontFamily: 'system-ui',
         minHeight: '100vh',
+        padding: 20,
+        background: '#ffffff',
+        color: '#000000',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >
       <h1>Вы авторизованы</h1>
-      <p>Теперь можно переходить ко второму экрану.</p>
+      <p>Дальше сюда добавим второй экран с данными.</p>
     </div>
   );
 };
